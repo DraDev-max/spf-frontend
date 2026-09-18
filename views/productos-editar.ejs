@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Producto - Sport Family</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="form-page">
+    <header class="dashboard-header">
+        <div class="dashboard-header-inner">
+            <div class="brand">
+                <img src="/img/logo-sf.png" alt="Sport Family Shoes" class="brand-mark">
+                <div class="brand-copy">
+                    <span>Sport Family</span>
+                    <small>Shoes</small>
+                </div>
+            </div>
+
+            <div class="top-actions">
+                <div class="user-pill">Usuario: <%= usuario %> · <%= rol || 'cliente' %></div>
+                <a href="/admin/productos" class="btn btn-ghost">Volver</a>
+                <a href="/usuarios" class="btn btn-ghost">Usuarios</a>
+                <form action="/logout" method="POST" style="display:inline;">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button type="submit" class="btn btn-danger">Salir</button>
+                </form>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard-wrap">
+        <section class="hero-card">
+            <div class="meta-chip">Edición</div>
+            <h1 class="hero-title">Editar producto</h1>
+            <p class="hero-copy">Ajusta nombre, categoría, stock, precio o imagen sin romper el inventario.</p>
+        </section>
+
+        <section class="section-card form-card">
+            <% if (error) { %>
+                <div class="error"><%= error %></div>
+            <% } %>
+
+            <form action="/admin/productos/editar" method="POST" class="form-grid">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="id" value="<%= producto.id %>">
+
+                <div class="form-group">
+                    <label for="categoria_id">Categoría</label>
+                    <select id="categoria_id" name="categoria_id" required>
+                        <option value="">Selecciona una categoría</option>
+                        <% categorias.forEach((categoria) => { %>
+                            <option value="<%= categoria.id %>" <%= String(producto.categoria_id) === String(categoria.id) ? 'selected' : '' %>><%= categoria.nombre %></option>
+                        <% }); %>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="nombre">Nombre</label>
+                    <input type="text" id="nombre" name="nombre" value="<%= producto.nombre %>" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="descripcion">Descripción</label>
+                    <textarea id="descripcion" name="descripcion" rows="4"><%= producto.descripcion %></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="marca">Marca</label>
+                    <input type="text" id="marca" name="marca" value="<%= producto.marca %>">
+                </div>
+
+                <div class="form-group">
+                    <label for="sku">SKU</label>
+                    <input type="text" id="sku" name="sku" value="<%= producto.sku %>">
+                </div>
+
+                <div class="form-group">
+                    <label for="precio">Precio</label>
+                    <input type="number" id="precio" name="precio" value="<%= producto.precio %>" min="0" step="0.01" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="stock">Stock</label>
+                    <input type="number" id="stock" name="stock" value="<%= producto.stock %>" min="0" step="1" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="imagen_url">Imagen URL</label>
+                    <input type="url" id="imagen_url" name="imagen_url" value="<%= producto.imagen_url %>" placeholder="https://...">
+                </div>
+
+                <div class="form-group">
+                    <label for="activo">Estado</label>
+                    <select id="activo" name="activo">
+                        <option value="1" <%= Number(producto.activo) ? 'selected' : '' %>>Activo</option>
+                        <option value="0" <%= Number(producto.activo) ? '' : 'selected' %>>Inactivo</option>
+                    </select>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Actualizar</button>
+                    <a href="/admin/productos" class="btn btn-secondary">Cancelar</a>
+                </div>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

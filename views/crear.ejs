@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nuevo Usuario - Sport Family</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="form-page">
+    <header class="dashboard-header">
+        <div class="dashboard-header-inner">
+            <div class="brand">
+                <img src="/img/logo-sf.png" alt="Sport Family Shoes" class="brand-mark">
+                <div class="brand-copy">
+                    <span>Sport Family</span>
+                    <small>Shoes</small>
+                </div>
+            </div>
+
+            <div class="top-actions">
+                <div class="user-pill">Usuario: <%= usuario %> · <%= rol || 'cliente' %></div>
+                <a href="/usuarios" class="btn btn-ghost">Volver</a>
+                <a href="/admin/productos" class="btn btn-ghost">Inventario</a>
+                <form action="/logout" method="POST" style="display:inline;">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button type="submit" class="btn btn-danger">Salir</button>
+                </form>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard-wrap">
+        <section class="hero-card">
+            <div class="meta-chip">Formulario</div>
+            <h1 class="hero-title">Crear nuevo usuario</h1>
+            <p class="hero-copy">Crea cuentas con rol controlado desde el backend real.</p>
+        </section>
+
+        <section class="section-card form-card">
+            <% if (error) { %>
+                <div class="error"><%= error %></div>
+            <% } %>
+
+            <form action="/usuarios/crear" method="POST" class="form-grid">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+                <div class="form-group">
+                    <label for="nombre">Nombre</label>
+                    <input type="text" id="nombre" name="nombre" value="<%= usuarioForm.nombre || '' %>" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" value="<%= usuarioForm.email || '' %>" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="rol">Rol</label>
+                    <select id="rol" name="rol">
+                        <option value="cliente" <%= (usuarioForm.rol || 'cliente') === 'cliente' ? 'selected' : '' %>>Cliente</option>
+                        <option value="admin" <%= usuarioForm.rol === 'admin' ? 'selected' : '' %>>Admin</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                    <a href="/usuarios" class="btn btn-secondary">Cancelar</a>
+                </div>
+            </form>
+        </section>
+    </main>
+</body>
+</html>
