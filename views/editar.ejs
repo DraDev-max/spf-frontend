@@ -8,15 +8,16 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/styles.css">
+    <script src="/theme.js" defer></script>
 </head>
 <body class="form-page">
     <header class="dashboard-header">
         <div class="dashboard-header-inner">
             <div class="brand">
-                <img src="/img/logo-sf.png" alt="Sport Family Shoes" class="brand-mark">
+                <img src="/img/logo-sf.png" alt="Sport Family Zapatos" class="brand-mark">
                 <div class="brand-copy">
                     <span>Sport Family</span>
-                    <small>Shoes</small>
+                    <small>Zapatos</small>
                 </div>
             </div>
 
@@ -24,10 +25,7 @@
                 <div class="user-pill">Usuario: <%= sesionUsuario %></div>
                 <a href="/usuarios" class="btn btn-ghost">Volver</a>
                 <a href="/admin/productos" class="btn btn-ghost">Inventario</a>
-                <form action="/logout" method="POST" style="display:inline;">
-                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                    <button type="submit" class="btn btn-danger">Salir</button>
-                </form>
+                <a href="/menu" class="btn btn-danger">Salir</a>
             </div>
         </div>
     </header>
@@ -54,7 +52,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="email">Email</label>
+                    <label for="email">Correo</label>
                     <input type="email" id="email" name="email" value="<%= usuarioForm.email || '' %>" required>
                 </div>
 
@@ -62,6 +60,7 @@
                     <label for="rol">Rol</label>
                     <select id="rol" name="rol">
                         <option value="cliente" <%= (usuarioForm.rol || 'cliente') === 'cliente' ? 'selected' : '' %>>Cliente</option>
+                        <option value="mod" <%= usuarioForm.rol === 'mod' ? 'selected' : '' %>>Mod</option>
                         <option value="admin" <%= usuarioForm.rol === 'admin' ? 'selected' : '' %>>Admin</option>
                     </select>
                 </div>
@@ -69,6 +68,35 @@
                 <div class="form-group">
                     <label for="password">Nueva contraseña</label>
                     <input type="password" id="password" name="password" placeholder="Deja vacío para mantener la actual">
+                </div>
+
+                <div class="form-group">
+                    <label for="identification_number">Identification number</label>
+                    <input type="text" id="identification_number" name="identification_number" value="<%= usuarioForm.identification_number || '' %>">
+                </div>
+                <div class="form-group">
+                    <label for="residence">Residence</label>
+                    <input type="text" id="residence" name="residence" value="<%= usuarioForm.residence || '' %>">
+                </div>
+                <div class="form-group">
+                    <label for="province">Provincia / departamento</label>
+                    <input type="text" id="province" name="province" value="<%= usuarioForm.province || '' %>">
+                </div>
+                <div class="form-group">
+                    <label for="municipality">Municipio</label>
+                    <input type="text" id="municipality" name="municipality" value="<%= usuarioForm.municipality || '' %>">
+                </div>
+                <div class="form-group">
+                    <label for="postal_code">Postal code</label>
+                    <input type="text" id="postal_code" name="postal_code" value="<%= usuarioForm.postal_code || '' %>">
+                </div>
+                <div class="form-group">
+                    <label for="address">Dirección</label>
+                    <input type="text" id="address" name="address" value="<%= usuarioForm.address || '' %>">
+                </div>
+                <div class="form-group">
+                    <label for="card_number">Número de tarjeta</label>
+                    <input type="text" id="card_number" name="card_number" value="<%= usuarioForm.card_number || '' %>">
                 </div>
 
                 <div class="form-actions">

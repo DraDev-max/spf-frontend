@@ -30,7 +30,11 @@ export function verificarCsrfToken(req, res, next) {
     }
 
     return res.status(403).render('login', {
-      error: 'La sesión expiró o el formulario es inválido'
+      error: 'La sesión expiró o el formulario es inválido',
+      message: null,
+      csrfToken: res.locals.csrfToken || '',
+      usuario: '',
+      dbStatus: { connected: false, database: '', host: '', checkedAt: '' }
     });
   }
 

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pago - Sport Family</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="form-page">
+    <main class="login-shell">
+        <section class="login-card">
+            <h1 class="login-title">Datos de entrega</h1>
+            <p class="subtitle">Completa la dirección para enviar el pedido.</p>
+
+            <% if (error) { %>
+                <div class="error"><%= error %></div>
+            <% } %>
+
+            <% if (pedido) { %>
+                <div class="error" style="background:#E8F7EE;color:#137333;border-left-color:#16A34A;">
+                    Pedido <strong><%= pedido.numero_pedido %></strong> creado correctamente.
+                </div>
+                <div style="display:flex;gap:10px;justify-content:center;margin-top:18px;">
+                    <a href="/menu" class="btn btn-primary">Volver al menú</a>
+                    <a href="/admin/pedidos" class="btn btn-ghost">Ver pedidos</a>
+                </div>
+            <% } else { %>
+                <form method="POST" action="/checkout">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+                    <div class="form-group">
+                        <label for="postal_code">Código postal</label>
+                        <input id="postal_code" name="postal_code" required value="<%= form.postal_code || '' %>">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="location">Localidad / ubicación</label>
+                        <input id="location" name="location" required value="<%= form.location || '' %>">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="province">Provincia / departamento</label>
+                        <input id="province" name="province" required value="<%= form.province || '' %>">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="municipality">Municipio</label>
+                        <input id="municipality" name="municipality" required value="<%= form.municipality || '' %>">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="address">Dirección</label>
+                        <input id="address" name="address" required value="<%= form.address || '' %>">
+                    </div>
+
+
+                    <hr style="margin: 22px 0; border: 0; border-top: 1px solid var(--sf-border);">
+
+                    <div class="form-group">
+                        <label for="coupon_code">Código de cupón</label>
+                        <input id="coupon_code" name="coupon_code" value="<%= form.coupon_code || '' %>" placeholder="Código guardado por administración">
+                    </div>
+
+                    <hr style="margin: 22px 0; border: 0; border-top: 1px solid var(--sf-border);">
+
+                    <div class="form-group">
+                        <label for="card_name">Nombre en la tarjeta</label>
+                        <input id="card_name" name="card_name" required value="<%= form.card_name || '' %>" placeholder="Juan Pérez">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="card_number">Número de tarjeta</label>
+                        <input id="card_number" name="card_number" required value="<%= form.card_number || '' %>" placeholder="4111 1111 1111 1111">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="card_expiry">Vencimiento</label>
+                        <input id="card_expiry" name="card_expiry" required value="<%= form.card_expiry || '' %>" placeholder="12/30">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="card_cvv">CVV</label>
+                        <input id="card_cvv" name="card_cvv" required value="<%= form.card_cvv || '' %>" placeholder="123">
+                    </div>
+
+                    <button type="submit" class="btn-login">Enviar pedido</button>
+                </form>
+                <p class="subtitle" style="margin-top: 18px;"><a href="/menu">Volver al carrito</a></p>
+            <% } %>
+        </section>
+    </main>
+</body>
+</html>

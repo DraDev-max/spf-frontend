@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil - Sport Family</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/theme.js" defer></script>
+</head>
+<body class="form-page">
+    <header class="dashboard-header">
+        <div class="dashboard-header-inner">
+            <div class="brand">
+                <img src="/img/logo-sf.png" alt="Sport Family Zapatos" class="brand-mark">
+                <div class="brand-copy">
+                    <span>Sport Family</span>
+                    <small>Zapatos</small>
+                </div>
+            </div>
+            <div class="top-actions">
+                <div class="user-pill">Usuario: <%= usuario %></div>
+                <a href="/menu" class="btn btn-ghost">Menú</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard-wrap">
+        <section class="hero-card">
+            <div class="meta-chip">Perfil</div>
+            <h1 class="hero-title">Mi perfil</h1>
+        </section>
+
+        <section class="section-card form-card cart-style-card">
+            <% if (error) { %><div class="error"><%= error %></div><% } %>
+            <% if (message) { %><div class="error" style="background:#E8F7EE;color:#137333;border-left-color:#16A34A;"><%= message %></div><% } %>
+
+            <form action="/perfil" method="POST" class="form-grid">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+                <div class="form-group">
+                    <label for="nombre">Nombre</label>
+                    <input id="nombre" name="nombre" value="<%= perfil.nombre || '' %>" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Correo</label>
+                    <input id="email" type="email" name="email" value="<%= perfil.email || '' %>" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Nueva contraseña</label>
+                    <input id="password" type="password" name="password" placeholder="Deja vacío para mantenerla">
+                </div>
+
+                <div class="form-group">
+                    <label for="residence">Residence</label>
+                    <input id="residence" name="residence" value="<%= perfil.residence || '' %>">
+                </div>
+                <div class="form-group">
+                    <label for="province">Provincia / departamento</label>
+                    <input id="province" name="province" value="<%= perfil.province || '' %>">
+                </div>
+                <div class="form-group">
+                    <label for="municipality">Municipio</label>
+                    <input id="municipality" name="municipality" value="<%= perfil.municipality || '' %>">
+                </div>
+                <div class="form-group">
+                    <label for="postal_code">Postal code</label>
+                    <input id="postal_code" name="postal_code" value="<%= perfil.postal_code || '' %>">
+                </div>
+                <div class="form-group">
+                    <label for="address">Dirección</label>
+                    <input id="address" name="address" value="<%= perfil.address || '' %>">
+                </div>
+
+                <div class="form-group">
+                    <label for="cardholder_name">Cardholder name</label>
+                    <input id="cardholder_name" name="cardholder_name" value="<%= perfil.cardholder_name || '' %>">
+                </div>
+                <div class="form-group">
+                    <label for="card_number">Número de tarjeta</label>
+                    <input id="card_number" name="card_number" value="<%= perfil.card_number || '' %>">
+                </div>
+                <div class="form-group">
+                    <label for="card_expiration">Expiration</label>
+                    <input id="card_expiration" name="card_expiration" value="<%= perfil.card_expiration || '' %>">
+                </div>
+                <div class="form-group">
+                    <label for="card_cvv">CVV</label>
+                    <input id="card_cvv" name="card_cvv" value="<%= perfil.card_cvv || '' %>">
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Guardar perfil</button>
+                    <a href="/menu" class="btn btn-secondary">Cancelar</a>
+                </div>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

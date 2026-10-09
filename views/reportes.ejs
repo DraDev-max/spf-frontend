@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Reportes - Sport Family</title><link rel="stylesheet" href="/styles.css">    <script src="/theme.js" defer></script>
+</head>
+<body class="list-page">
+<header class="dashboard-header"><div class="dashboard-header-inner"><div class="brand"><img src="/img/logo-sf.png" class="brand-mark"><div class="brand-copy"><span>Sport Family</span><small>Zapatos</small></div></div><div class="top-actions"><div class="user-pill">Usuario: <%= usuario %></div><a href="/menu" class="btn btn-ghost">Menú</a><a href="/admin/productos" class="btn btn-ghost">Inventario</a></div></div></header>
+<main class="dashboard-wrap">
+<section class="hero-card"><div class="meta-chip">FR11</div><h1 class="hero-title">Reportes y estadísticas</h1><p class="hero-copy">Ventas, rotación de inventario y resumen financiero.</p></section>
+<% if (typeof error !== 'undefined' && error) { %><div class="error"><%= error %></div><% } %>
+<section class="section-card"><h2 class="section-title">Resumen financiero</h2><p>Pedidos: <%= reportes.financial?.orders || 0 %> · Subtotal: $<%= Number(reportes.financial?.subtotal || 0).toFixed(2) %> · Impuestos: $<%= Number(reportes.financial?.taxes || 0).toFixed(2) %> · Descuentos: $<%= Number(reportes.financial?.discounts || 0).toFixed(2) %> · Total: $<%= Number(reportes.financial?.total || 0).toFixed(2) %></p></section>
+<section class="section-card"><h2 class="section-title">Ventas por producto/categoría</h2><div class="table-shell"><table><thead><tr><th>Producto</th><th>Categoría</th><th>Unidades</th><th>Ventas</th></tr></thead><tbody><% (reportes.salesByProduct || []).forEach(r=>{ %><tr><td><%= r.product %></td><td><%= r.category || '-' %></td><td><%= r.units || 0 %></td><td>$<%= Number(r.sales || 0).toFixed(2) %></td></tr><% }) %></tbody></table></div></section>
+<section class="section-card"><h2 class="section-title">Rendimiento de inventario</h2><div class="table-shell"><table><thead><tr><th>Producto</th><th>SKU</th><th>Existencias</th><th>Umbral</th><th>Estado</th></tr></thead><tbody><% (reportes.inventory || []).forEach(r=>{ %><tr><td><%= r.product %></td><td><%= r.sku %></td><td><%= r.stock %></td><td><%= r.low_stock_threshold %></td><td><%= r.low_stock ? 'Stock bajo' : 'Correcto' %></td></tr><% }) %></tbody></table></div></section>
+</main></body></html>

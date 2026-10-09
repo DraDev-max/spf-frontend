@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calificaciones - Sport Family</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/theme.js" defer></script>
+</head>
+<body class="list-page">
+    <header class="dashboard-header">
+        <div class="dashboard-header-inner">
+            <div class="brand">
+                <img src="/img/logo-sf.png" alt="Sport Family Zapatos" class="brand-mark">
+                <div class="brand-copy"><span>Sport Family</span><small>Zapatos</small></div>
+            </div>
+            <div class="top-actions">
+                <div class="user-pill">Usuario: <%= usuario %> · <%= rol || 'mod' %></div>
+                <a href="/menu" class="btn btn-ghost">Menú</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard-wrap">
+        <section class="hero-card">
+            <div class="meta-chip"><%= ratings.length %> reseñas</div>
+            <h1 class="hero-title">Moderar calificaciones</h1>
+            <p class="hero-copy">Aprobar o rechazar reseñas de productos.</p>
+        </section>
+
+        <section class="section-card">
+            <% if (typeof error !== 'undefined' && error) { %><div class="error"><%= error %></div><% } %>
+            <% if (ratings.length === 0) { %>
+                <div class="empty-state">No hay calificaciones.</div>
+            <% } else { %>
+                <div class="reviews-list">
+                    <% ratings.forEach((rating) => { %>
+                        <article class="review-card">
+                            <div class="order-card-header"><div><strong>Producto #<%= rating.producto_id %></strong><small><%= rating.usuario_nombre || 'Usuario' %></small></div><span class="meta-chip"><%= rating.puntuacion %>/5</span></div>
+                            <p class="review-comment"><%= rating.comentario || 'Sin comentario' %></p>
+                            <div class="order-card-footer"><span>Estado: <%= rating.estado %></span><div class="actions">
+                                            <form action="/admin/calificaciones" method="POST">
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                <input type="hidden" name="id" value="<%= rating.id %>">
+                                                <input type="hidden" name="estado" value="aprobada">
+                                                <button class="btn btn-primary" type="submit">Aprobar</button>
+                                            </form>
+                                            <form action="/admin/calificaciones" method="POST">
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                <input type="hidden" name="id" value="<%= rating.id %>">
+                                                <input type="hidden" name="estado" value="rechazada">
+                                                <button class="btn btn-danger" type="submit">Rechazar</button>
+                                            </form>
+                            </div></div>
+                        </article>
+                    <% }) %>
+                </div>
+            <% } %>
+        </section>
+    </main>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= product.title %> - Sport Family</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="list-page">
+    <header class="dashboard-header">
+        <div class="dashboard-header-inner">
+            <div class="brand">
+                <img src="/img/logo-sf.png" alt="Sport Family Zapatos" class="brand-mark">
+                <div class="brand-copy">
+                    <span>Sport Family</span>
+                    <small>Zapatos</small>
+                </div>
+            </div>
+            <div class="top-actions">
+                <div class="user-pill">Usuario: <%= usuario %></div>
+                <a href="/menu" class="btn btn-ghost">Volver al catálogo</a>
+                <a href="/menu" class="btn btn-danger">Salir</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard-wrap">
+        <section class="section-card" style="display:grid;grid-template-columns:minmax(260px,420px) 1fr;gap:24px;align-items:start;">
+            <img src="<%= product.thumbnail || '/img/product-placeholder.svg' %>" alt="<%= product.title %>" style="width:100%;max-height:420px;object-fit:contain;background:#F4F6FA;border-radius:20px;padding:24px;" onerror="this.onerror=null;this.src='/img/product-placeholder.svg'">
+            <div>
+                <p class="meta-chip"><%= product.category %></p>
+                <h1 class="hero-title"><%= product.title %></h1>
+                <p class="hero-copy"><%= product.description || 'Sin descripción.' %></p>
+                <p><strong>Marca:</strong> <%= product.brand %></p>
+                <p><strong>SKU:</strong> <%= product.sku || 'N/A' %></p>
+                <p><strong>Stock:</strong> <%= product.stock %> disponibles</p>
+                <% if (Number(product.discountPercent || 0) !== 0) { %>
+                    <p><strong>Precio base:</strong> $<%= Number(product.basePrice || 0).toFixed(2) %></p>
+                    <p><strong>Descuento aplicado:</strong> <%= Number(product.discountPercent || 0).toFixed(2) %>%</p>
+                <% } %>
+
+<h2 class="page-title" style="text-align:left;">$<%= Number(product.price || 0).toFixed(2) %></h2>
+            </div>
+        </section>
+
+        <section class="section-card" style="margin-top:22px;">
+            <h2 class="section-title">Calificaciones</h2>
+            <% if (!ratings || ratings.length === 0) { %>
+                <p>No hay calificaciones todavía.</p>
+            <% } %>
+            <% (ratings || []).forEach((rating) => { %>
+                <div class="quick-card" style="margin-top:10px;">
+                    <strong><%= '★'.repeat(Number(rating.puntuacion || 0)) %></strong>
+                    <p><%= rating.comentario || 'Sin comentario' %></p>
+                    <small><%= rating.usuario_nombre || 'Usuario' %></small>
+                </div>
+            <% }) %>
+
+            <form action="/calificaciones" method="POST" class="form-grid" style="margin-top:18px;">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="producto_id" value="<%= product.id %>">
+                <div class="form-group">
+                    <label for="puntuacion">Puntuación</label>
+                    <select id="puntuacion" name="puntuacion">
+                        <option value="5">5 estrellas</option>
+                        <option value="4">4 estrellas</option>
+                        <option value="3">3 estrellas</option>
+                        <option value="2">2 estrellas</option>
+                        <option value="1">1 estrella</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="comentario">Comentario</label>
+                    <textarea id="comentario" name="comentario" rows="3" placeholder="Tu reseña"></textarea>
+                </div>
+                <button class="btn btn-primary" type="submit">Enviar calificación</button>
+            </form>
+        </section>
+
+        <section class="section-card" style="margin-top:22px;">
+            <h2 class="section-title">Productos recomendados</h2>
+            <div class="quick-grid" style="margin-top:14px;">
+                <% if (recommended.length === 0) { %>
+                    <p>No hay recomendaciones todavía.</p>
+                <% } %>
+                <% recommended.forEach((item) => { %>
+                    <a href="/producto/<%= item.id %>" class="quick-card" style="text-decoration:none;color:inherit;">
+                        <img src="<%= item.thumbnail || '/img/product-placeholder.svg' %>" alt="<%= item.title %>" style="width:100%;height:130px;object-fit:contain;">
+                        <h3><%= item.title %></h3>
+                        <p><%= item.brand %> · $<%= Number(item.price || 0).toFixed(2) %></p>
+                    </a>
+                <% }) %>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

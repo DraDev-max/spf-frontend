@@ -115,6 +115,50 @@ textarea {
     margin-bottom: 6px;
 }
 
+body[data-theme="light"] {
+    --sf-black: #111827;
+    --sf-dark: #ffffff;
+    --sf-bg: #f6f8fb;
+    --sf-card: #ffffff;
+    --sf-text: #101828;
+    --sf-muted: #667085;
+    --sf-border: #d0d5dd;
+    background: #f6f8fb;
+    color: var(--sf-text);
+}
+
+.account-link a { transition: color .2s ease; }
+.account-link:hover a { color: #2563eb; text-decoration: underline; }
+
+.theme-toggle {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    z-index: 20;
+    border: 1px solid var(--sf-border);
+    border-radius: 10px;
+    padding: 8px 11px;
+    background: var(--sf-card);
+    color: var(--sf-text);
+    cursor: pointer;
+}
+
+body[data-theme="dark"] .theme-toggle {
+    background: #1f2937;
+    color: #f9fafb;
+    border-color: #374151;
+}
+
+body[data-theme="light"] .theme-toggle {
+    background: #ffffff;
+    color: #111827;
+    border-color: #d0d5dd;
+}
+
+body[data-theme="light"] .dashboard-header { background: #ffffff; color: var(--sf-text); }
+body[data-theme="light"] .dashboard-header .brand-copy,
+body[data-theme="light"] .dashboard-header .user-pill { color: var(--sf-text); }
+
 .subtitle {
     text-align: center;
     color: var(--sf-muted);
@@ -403,7 +447,36 @@ input[type="submit"].btn-primary:hover {
 
 .section-card {
     padding: 22px;
+    margin-bottom: 32px;
 }
+
+.form-group select {
+    margin: 4px;
+    width: calc(100% - 8px);
+    border-radius: 10px;
+}
+
+.form-group input[type="date"] {
+    margin: 4px;
+    width: calc(100% - 8px);
+    border: 1px solid #4b5563;
+    border-radius: 10px;
+}
+
+.orders-list { display: grid; gap: 16px; }
+.order-card { padding: 18px; border: 1px solid var(--sf-border); border-radius: 18px; background: var(--sf-card); }
+.order-card-header, .order-card-footer { display: flex; justify-content: space-between; gap: 16px; align-items: center; }
+.order-card-header small { display: block; color: var(--sf-muted); margin-top: 4px; }
+.order-items { margin: 16px 0; border-top: 1px solid var(--sf-border); border-bottom: 1px solid var(--sf-border); padding: 10px 0; }
+.order-items div { display: flex; justify-content: space-between; padding: 5px 0; }
+.order-card-footer { color: var(--sf-muted); }
+.order-card-footer strong { color: var(--sf-danger); font-size: 1.2rem; }
+.order-update { display: flex; gap: 10px; margin-top: 14px; }
+.order-update select { flex: 1; }
+.cart-style-card, .review-card { border-radius: 22px; }
+.reviews-list { display: grid; gap: 16px; }
+.review-card { padding: 18px; border: 1px solid var(--sf-border); background: var(--sf-card); }
+.review-comment { margin: 16px 0; padding: 12px; border-radius: 12px; background: var(--sf-bg); }
 
 .section-header {
     display: flex;
@@ -429,6 +502,16 @@ input[type="submit"].btn-primary:hover {
 .table-shell {
     overflow-x: auto;
     border-radius: 18px;
+}
+
+.table-shell input,
+.table-shell select {
+    background: #e5e7eb;
+    border: 1px solid #cbd5e1;
+    color: #111827;
+    border-radius: 10px;
+    margin: 4px;
+    padding: 8px 10px;
 }
 
 table {
@@ -477,6 +560,7 @@ tbody tr:hover td {
 
 .form-card {
     width: min(100%, 760px);
+    margin-bottom: 22px;
 }
 
 .form-grid {
@@ -563,4 +647,23 @@ tbody tr:hover td {
     input[type="submit"] {
         width: 100%;
     }
+}
+.shared-custom-select { min-width: 170px; margin: 4px 0; }
+.shared-custom-select > button { width: 100%; text-align: left; padding: 11px 14px; border: 1px solid #4b5563; border-radius: 10px; background: #111827; color: #f9fafb; cursor: pointer; }
+.shared-custom-select .custom-select-menu { display: none; position: absolute; z-index: 10; min-width: 100%; padding: 4px; border: 1px solid #4b5563; border-radius: 10px; background: #374151; box-shadow: 0 8px 18px rgba(0,0,0,.3); }
+.shared-custom-select { position: relative; }
+.shared-custom-select.open .custom-select-menu { display: grid; gap: 3px; }
+.shared-custom-select .custom-select-option { padding: 9px 10px; border-radius: 7px; color: #f9fafb; cursor: pointer; }
+.shared-custom-select .custom-select-option:hover { background: #4b5563; }
+input[type="date"] {
+    border: 1px solid #4b5563;
+    border-radius: 10px;
+    padding: 10px 12px;
+    background: #f3f4f6;
+    color: #111827;
+}
+body[data-theme="dark"] input[type="date"] {
+    background: #111827;
+    color: #f9fafb;
+    color-scheme: dark;
 }

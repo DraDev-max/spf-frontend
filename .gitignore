@@ -1,0 +1,11 @@
+/node_modules
+/.sessions
+.codegraph
+.claude-flow
+.agents
+.codex
+jmeter.*
+tests/selenium/evidence/
+tests/selenium/verbose-suite.js
+package-lock.*
+package-lock.json

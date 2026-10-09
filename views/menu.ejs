@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Sport Family</title>
+    <title>Panel - Sport Family</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -255,6 +256,35 @@
 
         .tab-content.active {
             display: block;
+            animation: fadeIn 0.28s ease-out;
+        }
+
+        #submenuContent > .dashboard-wrap {
+            animation: fadeIn 0.28s ease-out;
+        }
+
+        #submenuContent {
+            max-width: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Keep inline sections on the same 9px baseline as Catálogo. */
+        #submenu[data-page="/pedidos"],
+        #submenu[data-page="/admin/calificaciones"] {
+            margin-left: -9px;
+            width: calc(100% + 9px);
+        }
+
+        #submenuContent .hero-card,
+        #submenuContent .section-card {
+            width: 100%;
+            margin-left: 0;
+            margin-right: 0;
+        }
+
+        #submenuContent .form-card {
+            max-width: none;
         }
 
         @keyframes fadeIn {
@@ -415,6 +445,57 @@
             font-weight: 700;
         }
 
+        .catalog-search {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 16px 0;
+        }
+
+        .catalog-search input,
+        .catalog-search select {
+            padding: 10px 12px;
+            border: 1px solid var(--surface-border);
+            border-radius: 12px;
+            background: var(--surface);
+            color: var(--surface-text);
+        }
+
+        .catalog-search select#stockFilter {
+            margin: 4px;
+            border: 1px solid #4b5563;
+            border-radius: 10px;
+        }
+
+        .custom-select { position: relative; min-width: 170px; margin: 4px; }
+        .custom-select > button {
+            width: 100%; padding: 11px 14px; border: 1px solid #4b5563;
+            border-radius: 10px; background: #111827; color: #f9fafb;
+            text-align: left; cursor: pointer;
+        }
+        .custom-select-menu {
+            display: none; position: absolute; z-index: 10; inset: calc(100% + 4px) 0 auto;
+            padding: 4px; border: 1px solid #4b5563; border-radius: 10px;
+            background: #374151; box-shadow: 0 8px 18px rgba(0,0,0,.3);
+        }
+        .custom-select.open .custom-select-menu { display: grid; gap: 3px; }
+        .custom-select-option {
+            padding: 9px 10px; border-radius: 7px; color: #f9fafb; cursor: pointer;
+        }
+        .custom-select-option:hover { background: #4b5563; }
+
+        .btn-detalle {
+            width: 100%;
+            margin-bottom: 8px;
+            padding: 9px;
+            border: 1px solid var(--surface-border);
+            border-radius: 10px;
+            background: var(--surface-inset);
+            color: var(--surface-text);
+            font-weight: 800;
+            cursor: pointer;
+        }
+
         .btn-agregar {
             width: 100%;
             padding: 10px;
@@ -465,6 +546,19 @@
         .carrito-table td {
             padding: 15px;
             border-bottom: 1px solid var(--surface-border);
+        }
+
+        body[data-theme="dark"] #inventarioContent .carrito-table,
+        body[data-theme="dark"] #inventarioContent .carrito-table td,
+        body[data-theme="dark"] #inventarioContent .carrito-table td.item-nombre {
+            background: #ffffff !important;
+            color: #111827 !important;
+        }
+
+        body[data-theme="light"] #inventarioContent .carrito-table,
+        body[data-theme="light"] #inventarioContent .carrito-table td {
+            background: #ffffff;
+            color: #0f172a;
         }
 
         .carrito-table tr:last-child td {
@@ -642,10 +736,10 @@
     <header>
         <div class="header-content">
             <div class="logo-header">
-                <img src="/img/logo-sf.png" alt="Sport Family Shoes">
+                <img src="/img/logo-sf.png" alt="Sport Family Zapatos">
                 <div class="brand-text">
                     <span>Sport Family</span>
-                    <small>Shoes</small>
+                    <small>Zapatos</small>
                 </div>
             </div>
             <div class="nav-buttons">
@@ -662,51 +756,80 @@
     <div class="container">
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('catalogo', this)">📦 Catálogo</button>
+            <% if (isAdmin) { %>
             <button class="tab-btn" onclick="switchTab('inventario', this)">📋 Inventario Local</button>
+            <% } %>
             <button class="tab-btn" onclick="switchTab('carrito', this)">🛒 Carrito (<span id="cart-count">0</span>)</button>
+            <button class="tab-btn" onclick="cargarSubmenu('/pedidos', this)">📦 Mis pedidos</button>
+            <button class="tab-btn" onclick="cargarSubmenu('/perfil', this)">👤 Perfil</button>
+            <% if (isModerator) { %>
+            <button class="tab-btn" onclick="cargarSubmenu('/admin/calificaciones', this)">⭐ Moderación</button>
+            <% } %>
         </div>
-
-        <% if (isAdmin) { %>
-        <div class="admin-grid">
-            <a href="/usuarios" class="admin-card">
-                <h3>Usuarios</h3>
-                <p>Crear, editar o borrar cuentas con acceso al sistema.</p>
-            </a>
-            <a href="/admin/productos" class="admin-card">
-                <h3>Inventario</h3>
-                <p>Ajustar nombre, stock y alta o baja de productos del catálogo.</p>
-            </a>
-        </div>
-        <% } %>
 
         <div id="catalogo" class="tab-content active">
+            <% if (isAdmin) { %>
+            <div class="admin-grid">
+                <a href="/usuarios" class="admin-card"><h3>Usuarios</h3><p>Crear, editar o borrar cuentas con acceso al sistema.</p></a>
+                <a href="/admin/productos" class="admin-card"><h3>Inventario</h3><p>Ajustar nombre, stock y alta o baja de productos del catálogo.</p></a>
+                <a href="/admin/pedidos" class="admin-card"><h3>Pedidos</h3><p>Ver las órdenes creadas por los usuarios.</p></a>
+                <a href="/admin/reportes" class="admin-card"><h3>Reportes</h3><p>Consultar ventas por producto, inventario y resumen financiero.</p></a>
+                <a href="/admin/cupones" class="admin-card"><h3>Cupones</h3><p>Añadir, editar y remover cupones.</p></a>
+                <a href="/admin/calificaciones" class="admin-card"><h3>Calificaciones</h3><p>Moderar reseñas pendientes de productos.</p></a>
+            </div>
+            <% } else if (isModerator) { %>
+            <div class="admin-grid">
+                <a href="/admin/calificaciones" class="admin-card"><h3>Calificaciones</h3><p>Moderar reseñas pendientes de productos.</p></a>
+            </div>
+            <% } %>
             <div class="catalogo-header">
                 <div>
                     <h2>Productos Disponibles</h2>
-                    <div class="catalogo-note">Cargando desde las APIs externas de DummyJSON.</div>
                 </div>
                 <div class="filter-buttons" id="filterButtons"></div>
             </div>
+            <div class="catalog-search">
+                <input id="searchProduct" type="search" placeholder="Buscar producto, marca o SKU">
+                <input id="minPrice" type="number" min="0" step="0.01" placeholder="Precio mín.">
+                <input id="maxPrice" type="number" min="0" step="0.01" placeholder="Precio máx.">
+                <div class="custom-select" id="stockFilterPicker">
+                    <input type="hidden" id="stockFilter" value="">
+                    <button type="button">Todo stock</button>
+                    <div class="custom-select-menu">
+                        <div class="custom-select-option" data-value="">Todo stock</div>
+                        <div class="custom-select-option" data-value="1">Solo disponibles</div>
+                    </div>
+                </div>
+                <button type="button" class="filter-btn" onclick="cargarProductosDesdeAPI()">Filtrar</button>
+            </div>
             <div id="productosContainer" class="loading">
                 <div class="spinner"></div>
-                <p style="margin-top: 12px;">Cargando productos desde API externa...</p>
+            </div>
+            <div class="kids-section">
+                <div class="kids-section-header">
+                    <h3>Productos recomendados</h3>
+                    <span id="recommendedCount">0 artículos</span>
+                </div>
+                <div id="recommendedGrid" class="kids-grid"></div>
             </div>
             <div id="productosGrid" class="productos-grid" style="display:none;"></div>
             <div class="kids-section">
                 <div class="kids-section-header">
                     <h3>Kids' Footwear</h3>
-                    <span id="kidsCount">0 items</span>
+                    <span id="kidsCount">0 artículos</span>
                 </div>
                 <div id="kidsGrid" class="kids-grid"></div>
             </div>
         </div>
 
+        <% if (isAdmin) { %>
         <div id="inventario" class="tab-content">
             <div class="carrito-header">
-                <h2>Inventario Local desde Servlet</h2>
+                <h2>Inventario Local</h2>
             </div>
             <div id="inventarioContent"></div>
         </div>
+        <% } %>
 
         <div id="carrito" class="tab-content">
             <div class="carrito-header">
@@ -714,10 +837,15 @@
             </div>
             <div id="carritoContent"></div>
         </div>
+
+        <div id="submenu" class="tab-content">
+            <div id="submenuContent" class="dashboard-wrap"></div>
+        </div>
     </div>
 
     <script>
         const csrfToken = '<%= csrfToken %>';
+        const loginMessage = <%- JSON.stringify(loginMessage || '') %>;
         let productosAPI = [];
         let filtroActivo = 'todos';
 
@@ -725,13 +853,40 @@
             cargarProductosDesdeAPI();
             actualizarCarrito();
             aplicarTemaGuardado();
+            document.querySelectorAll('.custom-select').forEach((picker) => {
+                const button = picker.querySelector('button');
+                button.addEventListener('click', () => picker.classList.toggle('open'));
+                picker.querySelectorAll('.custom-select-option').forEach((option) => option.addEventListener('click', () => {
+                    picker.querySelector('input[type="hidden"]').value = option.dataset.value;
+                    button.textContent = option.textContent;
+                    picker.classList.remove('open');
+                }));
+            });
+            document.addEventListener('click', (event) => {
+                if (!event.target.closest('.custom-select')) {
+                    document.querySelectorAll('.custom-select.open').forEach((picker) => picker.classList.remove('open'));
+                }
+            });
+            if (loginMessage) mostrarToast(`✓ ${loginMessage}`);
         });
 
         function cargarProductosDesdeAPI() {
-            fetchJsonConTimeout('/productos', 10000)
+            const params = new URLSearchParams();
+            const search = document.getElementById('searchProduct')?.value.trim();
+            const minPrice = document.getElementById('minPrice')?.value;
+            const maxPrice = document.getElementById('maxPrice')?.value;
+            const inStock = document.getElementById('stockFilter')?.value;
+            if (search) params.set('q', search);
+            if (minPrice) params.set('min_price', minPrice);
+            if (maxPrice) params.set('max_price', maxPrice);
+            if (inStock) params.set('in_stock', inStock);
+            const url = params.toString() ? `/productos?${params.toString()}` : '/productos';
+
+            fetchJsonConTimeout(url, 10000)
                 .then(data => {
                     productosAPI = data.products || [];
                     crearFiltros();
+                    renderizarRecomendados();
                     renderizarProductos(productosAPI);
                     renderizarKidsSection();
                 })
@@ -812,6 +967,9 @@
                 const imgSrc = thumbnail || '/img/product-placeholder.svg';
                 const brand = p.brand || 'Sport Family';
                 const price = Number(p.price || 0).toFixed(2);
+                const basePrice = Number(p.basePrice || p.price || 0).toFixed(2);
+                const discount = Number(p.discountPercent || 0);
+                const discountHtml = discount ? `<div class="producto-marca">Precio base $${basePrice} · ${discount.toFixed(2)}%</div>` : '';
                 const card = document.createElement('div');
                 card.className = 'producto-card';
                 card.innerHTML = `
@@ -820,10 +978,49 @@
                         <div class="producto-nombre">${p.title}</div>
                         <div class="producto-marca">${brand}</div>
                         <div class="producto-precio">$${price}</div>
+                        ${discountHtml}
                         <div class="producto-stock">✓ ${Number(p.stock || 0)} disponibles</div>
+                        <a class="btn-detalle" style="display:block;text-align:center;text-decoration:none;" href="/producto/${p.id}">VER DETALLE</a>
                         <button class="btn-agregar" onclick='agregarAlCarrito(${p.id}, ${JSON.stringify(p.title)}, ${price})'>
                             AGREGAR
                         </button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function renderizarRecomendados() {
+            const grid = document.getElementById('recommendedGrid');
+            const count = document.getElementById('recommendedCount');
+            const recomendados = [...productosAPI]
+                .sort((a, b) => Number(b.stock || 0) - Number(a.stock || 0))
+                .slice(0, 4);
+
+            grid.innerHTML = '';
+            count.textContent = `${recomendados.length} artículos`;
+
+            if (recomendados.length === 0) {
+                grid.innerHTML = '<div class="kids-empty">No hay productos recomendados todavía.</div>';
+                return;
+            }
+
+            recomendados.forEach(p => {
+                const imgSrc = p.thumbnail || '/img/product-placeholder.svg';
+                const price = Number(p.price || 0).toFixed(2);
+                const basePrice = Number(p.basePrice || p.price || 0).toFixed(2);
+                const discount = Number(p.discountPercent || 0);
+                const discountHtml = discount ? `<div class="producto-marca">Precio base $${basePrice} · ${discount.toFixed(2)}%</div>` : '';
+                const card = document.createElement('div');
+                card.className = 'producto-card';
+                card.innerHTML = `
+                    <div class="producto-img"><img src="${imgSrc}" alt="${p.title}" onerror="this.onerror=null;this.src='/img/product-placeholder.svg'"></div>
+                    <div class="producto-info">
+                        <div class="producto-nombre">${p.title}</div>
+                        <div class="producto-marca">${p.brand || 'Sport Family'}</div>
+                        <div class="producto-precio">$${price}</div>
+                        ${discountHtml}
+                        <a class="btn-detalle" style="display:block;text-align:center;text-decoration:none;" href="/producto/${p.id}">VER DETALLE</a>
                     </div>
                 `;
                 grid.appendChild(card);
@@ -839,7 +1036,7 @@
                 .slice(0, 4);
 
             kidsGrid.innerHTML = '';
-            kidsCount.textContent = `${candidatos.length} items`;
+            kidsCount.textContent = `${candidatos.length} artículos`;
 
             if (candidatos.length === 0) {
                 kidsGrid.innerHTML = `
@@ -854,6 +1051,9 @@
                 const thumbnail = p.thumbnail || '';
                 const imgSrc = thumbnail || '/img/product-placeholder.svg';
                 const price = Number(p.price || 0).toFixed(2);
+                const basePrice = Number(p.basePrice || p.price || 0).toFixed(2);
+                const discount = Number(p.discountPercent || 0);
+                const discountHtml = discount ? `<div class="producto-marca">Precio base $${basePrice} · ${discount.toFixed(2)}%</div>` : '';
                 const card = document.createElement('div');
                 card.className = 'producto-card';
                 card.innerHTML = `
@@ -862,6 +1062,7 @@
                         <div class="producto-nombre">${p.title}</div>
                         <div class="producto-marca">Kids' Footwear preview</div>
                         <div class="producto-precio">$${price}</div>
+                        ${discountHtml}
                         <div class="producto-stock">✓ ${Number(p.stock || 0)} disponibles</div>
                         <button class="btn-agregar" onclick='agregarAlCarrito(${p.id}, ${JSON.stringify(p.title)}, ${price})'>
                             AGREGAR
@@ -1028,6 +1229,26 @@
             }
         }
 
+        async function cargarSubmenu(url, boton) {
+            document.querySelectorAll('.tab-btn').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            boton.classList.add('active');
+            const content = document.getElementById('submenuContent');
+            document.getElementById('submenu').dataset.page = url;
+            content.innerHTML = '<div class="loading">Cargando...</div>';
+            document.getElementById('submenu').classList.add('active');
+            try {
+                const html = await fetch(url).then(response => {
+                    if (!response.ok) throw new Error('No se pudo cargar la sección');
+                    return response.text();
+                });
+                const page = new DOMParser().parseFromString(html, 'text/html');
+                content.innerHTML = page.querySelector('main')?.innerHTML || '<div class="error">No se pudo cargar la sección.</div>';
+            } catch (error) {
+                content.innerHTML = `<div class="error">${error.message}</div>`;
+            }
+        }
+
         function cargarInventarioLocal() {
             fetch('/inventario')
                 .then(res => res.json())
@@ -1048,7 +1269,7 @@
                 return;
             }
 
-            let html = '<table class="carrito-table"><thead><tr><th>ID</th><th>Nombre</th><th>Marca</th><th>Categoría</th><th>Precio</th><th>Stock</th></tr></thead><tbody>';
+            let html = '<table class="carrito-table"><thead><tr><th>ID</th><th>Nombre</th><th>Marca</th><th>Categoría</th><th>Precio</th><th>Existencias</th></tr></thead><tbody>';
 
             productos.forEach(prod => {
                 html += `
@@ -1122,32 +1343,7 @@
         }
 
         function procederCompra() {
-            fetch('/pedidos', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-csrf-token': csrfToken
-                },
-                body: JSON.stringify({})
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (!data.success) {
-                    throw new Error('El pedido no pudo crearse');
-                }
-
-                actualizarCarrito();
-                mostrarToast(`✓ Pedido ${data.pedido?.numero_pedido || 'creado'} generado`);
-            })
-            .catch(error => {
-                console.error('Error al crear pedido:', error);
-                mostrarError('No se pudo crear el pedido.');
-            });
+            window.location.href = '/checkout';
         }
     </script>
 </body>

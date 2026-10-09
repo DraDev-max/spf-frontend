@@ -10,6 +10,8 @@ const DEFAULT_TIMEOUT = Number(process.env.SELENIUM_TIMEOUT_MS || 15000);
 const SECTION_DELAY_MS = Number(process.env.SELENIUM_SECTION_DELAY_MS || 30000);
 const ADMIN_USER = process.env.SELENIUM_ADMIN_USER || 'admin';
 const ADMIN_PASSWORD = process.env.SELENIUM_ADMIN_PASSWORD || '123456';
+const MOD_USER = process.env.SELENIUM_MOD_USER || 'mod';
+const MOD_PASSWORD = process.env.SELENIUM_MOD_PASSWORD || '123456';
 const DEFAULT_CHROME_BINARY = process.env.CHROME_BINARY_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 
 export async function createDriver() {
@@ -35,14 +37,22 @@ export async function openLoginPage(driver) {
   await driver.wait(until.titleContains('Login'), DEFAULT_TIMEOUT);
 }
 
-export async function loginAsAdmin(driver) {
+export async function loginAs(driver, usuario, password) {
   await openLoginPage(driver);
   await driver.findElement(By.id('usuario')).clear();
-  await driver.findElement(By.id('usuario')).sendKeys(ADMIN_USER);
+  await driver.findElement(By.id('usuario')).sendKeys(usuario);
   await driver.findElement(By.id('password')).clear();
-  await driver.findElement(By.id('password')).sendKeys(ADMIN_PASSWORD);
+  await driver.findElement(By.id('password')).sendKeys(password);
   await driver.findElement(By.css('button[type="submit"]')).click();
   await driver.wait(until.urlContains('/menu'), DEFAULT_TIMEOUT);
+}
+
+export function loginAsAdmin(driver) {
+  return loginAs(driver, ADMIN_USER, ADMIN_PASSWORD);
+}
+
+export function loginAsMod(driver) {
+  return loginAs(driver, MOD_USER, MOD_PASSWORD);
 }
 
 export async function cleanupDriver(driver) {
@@ -97,4 +107,4 @@ export async function getBackendJson(path) {
   return response.json();
 }
 
-export { BASE_URL, By, until, DEFAULT_TIMEOUT, SECTION_DELAY_MS };
+export { BASE_URL, By, until, DEFAULT_TIMEOUT, SECTION_DELAY_MS, ADMIN_USER, ADMIN_PASSWORD, MOD_USER, MOD_PASSWORD };

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cupones - Sport Family</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/theme.js" defer></script>
+</head>
+<body class="list-page">
+    <header class="dashboard-header">
+        <div class="dashboard-header-inner">
+            <div class="brand"><img src="/img/logo-sf.png" alt="Sport Family Zapatos" class="brand-mark"><div class="brand-copy"><span>Sport Family</span><small>Zapatos</small></div></div>
+            <div class="top-actions">
+                <div class="user-pill">Usuario: <%= usuario %> · <%= rol || 'admin' %></div>
+                <a href="/menu" class="btn btn-ghost">Menú</a>
+                <a href="/admin/productos" class="btn btn-ghost">Inventario</a>
+                <a href="/menu" class="btn btn-danger">Salir</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard-wrap">
+        <section class="hero-card">
+            <div class="meta-chip"><%= cupones.length %> cupones</div>
+            <h1 class="hero-title">Cupones</h1>
+            <p class="hero-copy">Administra códigos y porcentajes.</p>
+        </section>
+
+        <section class="section-card form-card">
+            <% if (error) { %><div class="error"><%= error %></div><% } %>
+            <h2 class="section-title">Nuevo cupón</h2>
+            <form action="/admin/cupones/crear" method="POST" class="form-grid">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <div class="form-group"><label for="codigo">Código</label><input id="codigo" name="codigo" required placeholder="test"></div>
+                <div class="form-group"><label for="descripcion">Descripción</label><input id="descripcion" name="descripcion" placeholder="Cupón de prueba"></div>
+                <div class="form-group"><label for="descuento_porcentaje">Descuento %</label><input type="number" min="0" max="100" step="0.01" id="descuento_porcentaje" name="descuento_porcentaje" value="0"><small>Solo se permiten valores de 0% a 100%.</small></div>
+                <div class="form-group"><label for="activo">Estado</label><select id="activo" name="activo"><option value="1">Activo</option><option value="0">Inactivo</option></select></div>
+                <div class="form-actions"><button type="submit" class="btn btn-primary">Crear cupón</button></div>
+            </form>
+        </section>
+
+        <section class="section-card">
+            <h2 class="section-title">Cupones registrados</h2>
+            <% if (cupones.length === 0) { %>
+                <div class="empty-state">No hay cupones.</div>
+            <% } else { %>
+                <div class="table-shell">
+                    <table>
+                        <thead><tr><th>ID</th><th>Código</th><th>Descripción</th><th>Descuento %</th><th>Estado</th><th>Acciones</th></tr></thead>
+                        <tbody>
+                        <% cupones.forEach((cupon) => { %>
+                            <tr>
+                                <form action="/admin/cupones/editar" method="POST">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                    <input type="hidden" name="id" value="<%= cupon.id %>">
+                                    <td><%= cupon.id %></td>
+                                    <td><input name="codigo" value="<%= cupon.codigo %>" required></td>
+                                    <td><input name="descripcion" value="<%= cupon.descripcion || '' %>"></td>
+                                    <td><input type="number" min="0" max="100" step="0.01" name="descuento_porcentaje" value="<%= cupon.descuento_porcentaje %>"></td>
+                                    <td><select name="activo"><option value="1" <%= Number(cupon.activo) ? 'selected' : '' %>>Activo</option><option value="0" <%= Number(cupon.activo) ? '' : 'selected' %>>Inactivo</option></select></td>
+                                    <td class="actions"><button class="btn btn-primary" type="submit">Guardar</button>
+                                </form>
+                                <form action="/admin/cupones/eliminar" method="POST" style="display:inline;">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                    <input type="hidden" name="id" value="<%= cupon.id %>">
+                                    <button class="btn btn-danger" type="submit" onclick="return confirm('¿Eliminar este cupón?')">Eliminar</button>
+                                </form></td>
+                            </tr>
+                        <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } %>
+        </section>
+    </main>
+</body>
+</html>

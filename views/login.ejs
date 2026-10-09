@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Sport Family</title>
+    <title>Inicio de sesión - Sport Family</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -13,7 +13,7 @@
     <main class="login-shell">
         <section class="login-card">
             <div class="login-logo-box">
-                <img src="/img/logo-sf.png" alt="Sport Family Shoes" class="login-logo">
+                <img src="/img/logo-sf.png" alt="Sport Family Zapatos" class="login-logo">
             </div>
 
             <h1 class="login-title">Sport Family</h1>
@@ -22,6 +22,9 @@
 
             <% if (error) { %>
                 <div class="error"><%= error %></div>
+            <% } %>
+            <% if (typeof message !== 'undefined' && message) { %>
+                <div class="error" style="background:#E8F7EE;color:#137333;border-left-color:#16A34A;"><%= message %></div>
             <% } %>
 
             <form method="POST" action="/login">
@@ -39,7 +42,8 @@
                 <button type="submit" class="btn-login">Ingresar</button>
             </form>
 
-            <p class="subtitle" style="margin-top: 18px;">Usa una cuenta válida del backend. Las credenciales de demo ya no se muestran en pantalla.</p>
+            <p class="account-link" style="text-align:center; margin-top:22px;"><a href="/register">¿No tienes cuenta?</a></p>
+
         </section>
     </main>
 </body>

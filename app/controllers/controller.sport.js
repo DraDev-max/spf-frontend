@@ -39,10 +39,25 @@ function requireAdmin(req, res) {
   }
 
   if (getSessionRole(req) !== 'admin') {
-    res.status(403).render('login', { error: 'No tienes permisos para entrar a esta seccion' });
+    res.status(403).render('login', {
+      error: 'No tienes permisos para entrar a esta seccion',
+      message: null,
+      csrfToken: res.locals.csrfToken || '',
+      usuario: req.session?.usuario?.usuario || req.session?.usuario || '',
+      dbStatus: req.dbStatus || { connected: false, database: '', host: '', checkedAt: '' }
+    });
     return false;
   }
 
+  return true;
+}
+
+function requireModerator(req, res) {
+  if (!requireLogin(req, res)) return false;
+  if (!['admin', 'mod'].includes(getSessionRole(req))) {
+    res.status(403).send('Permisos insuficientes');
+    return false;
+  }
   return true;
 }
 
@@ -78,9 +93,15 @@ function mapProductForCatalog(product) {
   return {
     id: product.id,
     title: product.nombre,
+    description: product.descripcion || '',
+    sku: product.sku || '',
     brand: product.marca || 'Sport Family',
-    price: toNumber(product.precio, 0),
+    price: toNumber(product.precio_final ?? product.precio, 0),
+    basePrice: toNumber(product.precio, 0),
+    discountPercent: toNumber(product.descuento_final_porcentaje ?? product.descuento_porcentaje, 0),
+    commentsCount: toInteger(product.comentarios_count, 0),
     stock: toInteger(product.stock, 0),
+    categoryId: product.categoria_id,
     category: product.categoria_nombre || product.categoria || 'general',
     thumbnail: product.imagen_url || product.thumbnail || ''
   };
@@ -91,6 +112,10 @@ function mapProductForInventory(product) {
     id: product.id,
     nombre: product.nombre,
     precio: toNumber(product.precio, 0),
+    precio_final: toNumber(product.precio_final ?? product.precio, 0),
+    descuento_porcentaje: toNumber(product.descuento_porcentaje, 0),
+    descuento_final_porcentaje: toNumber(product.descuento_final_porcentaje ?? product.descuento_porcentaje, 0),
+    comentarios_count: toInteger(product.comentarios_count, 0),
     stock: toInteger(product.stock, 0),
     categoria: normalizeCategoryLabel(product.categoria_nombre || product.categoria || 'general'),
     marca: product.marca || 'Sport Family'
@@ -181,6 +206,13 @@ async function apiRequest(req, path, options = {}) {
 }
 
 function ensureCatalogSession(req) {
+  const user = getSessionUser(req);
+  const stableUserId = user.id || user.email || user.usuario || user.nombre;
+  if (stableUserId) {
+    req.session.catalogoSessionId = `user-${stableUserId}`;
+    return req.session.catalogoSessionId;
+  }
+
   if (!req.session.catalogoSessionId) {
     req.session.catalogoSessionId = req.session.id;
   }
@@ -194,9 +226,10 @@ async function leerCarritoBackend(req) {
   return buildCartSummary(data);
 }
 
-function renderLogin(req, res, error = null) {
+function renderLogin(req, res, error = null, message = null) {
   return res.render('login', {
     error,
+    message,
     csrfToken: res.locals.csrfToken || '',
     usuario: req.session?.usuario?.usuario || req.session?.usuario || '',
     dbStatus: req.dbStatus || { connected: false, database: '', host: '', checkedAt: '' }
@@ -226,7 +259,13 @@ function defaultProducto() {
     descripcion: '',
     marca: '',
     sku: '',
+    size: 'U',
+    color: 'default',
+    low_stock_threshold: 5,
+    warehouse_location: '',
+    stock_adjustment: 0,
     precio: 0,
+    descuento_porcentaje: 0,
     stock: 0,
     imagen_url: '',
     activo: 1
@@ -239,8 +278,36 @@ function defaultUsuario() {
     nombre: '',
     email: '',
     password: '',
-    rol: 'cliente'
+    rol: 'cliente',
+    residence: '',
+    province: '',
+    municipality: '',
+    postal_code: '',
+    address: '',
+    cardholder_name: '',
+    card_number: '',
+    card_expiration: '',
+    card_cvv: '',
+    identification_number: ''
   };
+}
+
+function readProfileForm(body, includeAdminOnly = false) {
+  const form = {
+    nombre: toText(body.nombre, ''),
+    email: toText(body.email, ''),
+    residence: toText(body.residence ?? body.residencia, ''),
+    province: toText(body.province ?? body.provincia, ''),
+    municipality: toText(body.municipality ?? body.municipio, ''),
+    postal_code: toText(body.postal_code ?? body.codigo_postal, ''),
+    address: toText(body.address ?? body.direccion, ''),
+    cardholder_name: toText(body.cardholder_name ?? body.tarjeta_nombre, ''),
+    card_number: toText(body.card_number ?? body.tarjeta_numero, ''),
+    card_expiration: toText(body.card_expiration ?? body.tarjeta_vencimiento, ''),
+    card_cvv: toText(body.card_cvv ?? body.tarjeta_cvv, '')
+  };
+  if (includeAdminOnly) form.identification_number = toText(body.identification_number ?? body.numero_identificacion, '');
+  return form;
 }
 
 export async function getLogin(req, res) {
@@ -251,6 +318,11 @@ export async function getLogin(req, res) {
   }
 
   return renderLogin(req, res);
+}
+
+export function getRegister(req, res) {
+  if (req.session?.token) return res.redirect('/menu');
+  return res.render('register', { error: null, csrfToken: res.locals.csrfToken || '' });
 }
 
 export async function postLogin(req, res) {
@@ -277,13 +349,38 @@ export async function postLogin(req, res) {
       rol: data.rol || data.usuario?.rol || 'cliente'
     };
     req.session.rol = data.rol || data.usuario?.rol || 'cliente';
-    req.session.cookie.maxAge = 30 * 60 * 1000;
+    req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000;
     req.session.csrfToken = crypto.randomBytes(32).toString('hex');
+    req.session.loginMessage = `Welcome, ${getSessionName(req)}`;
+    req.session.catalogoSessionId = null;
     ensureCatalogSession(req);
 
     return res.redirect('/menu');
   } catch (error) {
     return renderLogin(req, res, error.message || 'Credenciales incorrectas');
+  }
+}
+
+export async function postRegister(req, res) {
+  req.dbStatus = await fetchBackendHealth();
+
+  try {
+    await backendRequest('/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nombre: toText(req.body.nombre ?? req.body.usuario, ''),
+        email: toText(req.body.email, ''),
+        password: toText(req.body.password, '')
+      })
+    });
+
+    return renderLogin(req, res, null, 'Cuenta creada. Ya puedes iniciar sesión.');
+  } catch (error) {
+    return res.render('register', {
+      error: error.message || 'No se pudo crear la cuenta',
+      csrfToken: res.locals.csrfToken || ''
+    });
   }
 }
 
@@ -302,12 +399,17 @@ export async function getMenu(req, res) {
     return res.redirect('/login');
   }
 
+  const loginMessage = req.session.loginMessage || '';
+  req.session.loginMessage = null;
+
   return res.render('menu', {
     usuario: getSessionName(req),
     rol: getSessionRole(req),
     csrfToken: res.locals.csrfToken || '',
     isAdmin: getSessionRole(req) === 'admin',
-    dbStatus: req.dbStatus
+    isModerator: ['admin', 'mod'].includes(getSessionRole(req)),
+    dbStatus: req.dbStatus,
+    loginMessage
   });
 }
 
@@ -416,7 +518,8 @@ export async function postEditarUsuario(req, res) {
     nombre: toText(req.body.nombre, ''),
     email: toText(req.body.email, ''),
     password: toText(req.body.password, ''),
-    rol: toText(req.body.rol, 'cliente')
+    rol: toText(req.body.rol, 'cliente'),
+    ...readProfileForm(req.body, true)
   };
 
   if (usuarioForm.password === '') {
@@ -442,6 +545,62 @@ export async function postEditarUsuario(req, res) {
   }
 }
 
+export async function getPerfil(req, res) {
+  if (!requireLogin(req, res)) return;
+
+  try {
+    const perfil = await apiRequest(req, '/perfil');
+    return res.render('perfil', {
+      usuario: getSessionName(req),
+      csrfToken: res.locals.csrfToken || '',
+      error: null,
+      message: null,
+      perfil
+    });
+  } catch (error) {
+    return res.render('perfil', {
+      usuario: getSessionName(req),
+      csrfToken: res.locals.csrfToken || '',
+      error: error.message || 'No se pudo cargar el perfil',
+      message: null,
+      perfil: defaultUsuario()
+    });
+  }
+}
+
+export async function postPerfil(req, res) {
+  if (!requireLogin(req, res)) return;
+
+  const perfil = readProfileForm(req.body, false);
+  const password = toText(req.body.password, '');
+  if (password) perfil.password = password;
+
+  try {
+    const actualizado = await apiRequest(req, '/perfil', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(perfil)
+    });
+
+    req.session.usuario = { ...req.session.usuario, nombre: actualizado.nombre, email: actualizado.email };
+    return res.render('perfil', {
+      usuario: getSessionName(req),
+      csrfToken: res.locals.csrfToken || '',
+      error: null,
+      message: 'Perfil actualizado',
+      perfil: actualizado
+    });
+  } catch (error) {
+    return res.render('perfil', {
+      usuario: getSessionName(req),
+      csrfToken: res.locals.csrfToken || '',
+      error: error.message || 'No se pudo actualizar el perfil',
+      message: null,
+      perfil
+    });
+  }
+}
+
 export async function postEliminarUsuario(req, res) {
   if (!requireAdmin(req, res)) {
     return;
@@ -459,6 +618,65 @@ export async function postEliminarUsuario(req, res) {
   }
 
   return res.redirect('/usuarios');
+}
+
+
+export async function getCuponesAdmin(req, res) {
+  if (!requireAdmin(req, res)) return;
+  try {
+    const cupones = await apiRequest(req, '/cupones');
+    return renderAdmin('cupones-listar', req, res, { cupones: Array.isArray(cupones) ? cupones : [], error: null });
+  } catch (error) {
+    return renderAdmin('cupones-listar', req, res, { cupones: [], error: error.message || 'No se pudieron cargar los cupones' });
+  }
+}
+
+export async function postCrearCupon(req, res) {
+  if (!requireAdmin(req, res)) return;
+  try {
+    await apiRequest(req, '/cupones', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        codigo: toText(req.body.codigo, ''),
+        descripcion: toText(req.body.descripcion, ''),
+        descuento_porcentaje: toNumber(req.body.descuento_porcentaje, 0),
+        activo: toInteger(req.body.activo, 1)
+      })
+    });
+  } catch (error) {
+    console.error('Error al crear cupon:', error);
+  }
+  return res.redirect('/admin/cupones');
+}
+
+export async function postEditarCupon(req, res) {
+  if (!requireAdmin(req, res)) return;
+  try {
+    await apiRequest(req, `/cupones/${toInteger(req.body.id, 0)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        codigo: toText(req.body.codigo, ''),
+        descripcion: toText(req.body.descripcion, ''),
+        descuento_porcentaje: toNumber(req.body.descuento_porcentaje, 0),
+        activo: toInteger(req.body.activo, 1)
+      })
+    });
+  } catch (error) {
+    console.error('Error al editar cupon:', error);
+  }
+  return res.redirect('/admin/cupones');
+}
+
+export async function postEliminarCupon(req, res) {
+  if (!requireAdmin(req, res)) return;
+  try {
+    await apiRequest(req, `/cupones/${toInteger(req.body.id, 0)}`, { method: 'DELETE' });
+  } catch (error) {
+    console.error('Error al eliminar cupon:', error);
+  }
+  return res.redirect('/admin/cupones');
 }
 
 export async function getProductosAdmin(req, res) {
@@ -482,6 +700,73 @@ export async function getProductosAdmin(req, res) {
       productos: [],
       categorias: [],
       error: error.message || 'No se pudo cargar el inventario'
+    });
+  }
+}
+
+export async function getPedidosAdmin(req, res) {
+  if (!requireAdmin(req, res)) {
+    return;
+  }
+
+  try {
+    const params = new URLSearchParams(); ['q','estado','fecha','cliente_email'].forEach(k => { if (req.query[k]) params.set(k, req.query[k]); }); const pedidos = await apiRequest(req, `/pedidos?${params.toString()}`);
+    return renderAdmin('pedidos-listar', req, res, {
+      pedidos: Array.isArray(pedidos) ? pedidos : [],
+      titulo: 'Pedidos de usuarios',
+      descripcion: 'Todas las ordenes creadas desde el carrito.',
+      adminView: true,
+      query: req.query || {}
+    });
+  } catch (error) {
+    console.error('Error al cargar pedidos:', error);
+    return renderAdmin('pedidos-listar', req, res, {
+      pedidos: [],
+      titulo: 'Pedidos de usuarios',
+      descripcion: 'Todas las ordenes creadas desde el carrito.',
+      adminView: true,
+      query: req.query || {},
+      error: error.message || 'No se pudieron cargar los pedidos'
+    });
+  }
+}
+
+export async function getPedidosUsuario(req, res) {
+  if (!requireLogin(req, res)) {
+    return;
+  }
+
+  if (getSessionRole(req) === 'admin') {
+    return getPedidosAdmin(req, res);
+  }
+
+  try {
+    const sessionId = ensureCatalogSession(req);
+    const email = req.session?.usuario?.email || '';
+    const params = new URLSearchParams(email ? { cliente_email: email } : { session_id: sessionId });
+    const pedidos = await apiRequest(req, `/pedidos?${params.toString()}`);
+    return res.render('pedidos-listar', {
+      usuario: getSessionName(req),
+      rol: getSessionRole(req),
+      csrfToken: res.locals.csrfToken || '',
+      pedidos: Array.isArray(pedidos) ? pedidos : [],
+      titulo: 'Mis pedidos',
+      descripcion: 'Ordenes creadas desde tu carrito.',
+      adminView: false,
+      query: {}
+    });
+  } catch (error) {
+    console.error('Error al cargar pedidos del usuario:', error);
+    return res.render('pedidos-listar', {
+      usuario: getSessionName(req),
+      rol: getSessionRole(req),
+      csrfToken: res.locals.csrfToken || '',
+      pedidos: [],
+      titulo: 'Mis pedidos',
+      descripcion: 'Ordenes creadas desde tu carrito.',
+      adminView: false,
+      query: {},
+      error: error.message || 'No se pudieron cargar tus pedidos'
     });
   }
 }
@@ -519,7 +804,12 @@ export async function postCrearProducto(req, res) {
     descripcion: toText(req.body.descripcion, ''),
     marca: toText(req.body.marca, ''),
     sku: toText(req.body.sku, ''),
+    size: toText(req.body.size, 'U'),
+    color: toText(req.body.color, 'default'),
+    low_stock_threshold: toInteger(req.body.low_stock_threshold, 5),
+    warehouse_location: toText(req.body.warehouse_location, ''),
     precio: toNumber(req.body.precio, 0),
+    descuento_porcentaje: toNumber(req.body.descuento_porcentaje, 0),
     stock: toInteger(req.body.stock, 0),
     imagen_url: toText(req.body.imagen_url, ''),
     activo: toInteger(req.body.activo, 1)
@@ -585,7 +875,13 @@ export async function postEditarProducto(req, res) {
     descripcion: toText(req.body.descripcion, ''),
     marca: toText(req.body.marca, ''),
     sku: toText(req.body.sku, ''),
+    size: toText(req.body.size, 'U'),
+    color: toText(req.body.color, 'default'),
+    low_stock_threshold: toInteger(req.body.low_stock_threshold, 5),
+    warehouse_location: toText(req.body.warehouse_location, ''),
+    stock_adjustment: toInteger(req.body.stock_adjustment, 0),
     precio: toNumber(req.body.precio, 0),
+    descuento_porcentaje: toNumber(req.body.descuento_porcentaje, 0),
     stock: toInteger(req.body.stock, 0),
     imagen_url: toText(req.body.imagen_url, ''),
     activo: toInteger(req.body.activo, 1)
@@ -630,13 +926,50 @@ export async function postEliminarProducto(req, res) {
   return res.redirect('/admin/productos');
 }
 
+
+export async function postImportarProductos(req, res) {
+  if (!requireAdmin(req, res)) return;
+  try {
+    await apiRequest(req, '/productos/importar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ csv: req.body.csv }) });
+  } catch (error) {
+    console.error('Error al importar productos:', error);
+  }
+  return res.redirect('/admin/productos');
+}
+
+export async function postActualizarPedidoAdmin(req, res) {
+  if (!requireAdmin(req, res)) return;
+  try {
+    await apiRequest(req, `/pedidos/${toInteger(req.body.id, 0)}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ estado: req.body.estado }) });
+  } catch (error) {
+    console.error('Error al actualizar pedido:', error);
+  }
+  return res.redirect('/admin/pedidos');
+}
+
+export async function getReportesAdmin(req, res) {
+  if (!requireAdmin(req, res)) return;
+  try {
+    const reportes = await apiRequest(req, '/reportes');
+    return renderAdmin('reportes', req, res, { reportes });
+  } catch (error) {
+    return renderAdmin('reportes', req, res, { reportes: { salesByProduct: [], inventory: [], financial: {} }, error: error.message || 'No se pudieron cargar los reportes' });
+  }
+}
+
 export async function getProductos(req, res) {
   if (!requireLogin(req, res)) {
     return;
   }
 
   try {
-    const products = await backendRequest('/productos?activo=1');
+    const params = new URLSearchParams({ activo: '1' });
+    ['q', 'categoria_id', 'marca', 'min_price', 'max_price', 'in_stock'].forEach((key) => {
+      if (req.query[key] !== undefined && req.query[key] !== '') {
+        params.set(key, req.query[key]);
+      }
+    });
+    const products = await backendRequest(`/productos?${params.toString()}`);
     res.json({ products: products.map(mapProductForCatalog) });
   } catch (error) {
     console.error('Error al cargar productos:', error);
@@ -644,9 +977,114 @@ export async function getProductos(req, res) {
   }
 }
 
+export async function getProductoDetalle(req, res) {
+  if (!requireLogin(req, res)) {
+    return;
+  }
+
+  try {
+    const product = mapProductForCatalog(await backendRequest(`/productos/${req.params.id}`));
+    const params = new URLSearchParams({
+      exclude_id: String(product.id),
+      limit: '4'
+    });
+    if (product.categoryId) params.set('categoria_id', product.categoryId);
+    if (product.brand) params.set('marca', product.brand);
+    const recommended = await backendRequest(`/productos/recomendados?${params.toString()}`);
+    res.json({ product, recommended: recommended.map(mapProductForCatalog) });
+  } catch (error) {
+    console.error('Error al cargar detalle de producto:', error);
+    res.status(502).json({ error: 'No se pudo cargar el detalle del producto' });
+  }
+}
+
+export async function getProductoPagina(req, res) {
+  if (!req.session?.token) {
+    return res.redirect('/login');
+  }
+
+  try {
+    const product = mapProductForCatalog(await backendRequest(`/productos/${req.params.id}`));
+    const params = new URLSearchParams({ exclude_id: String(product.id), limit: '4' });
+    if (product.categoryId) params.set('categoria_id', product.categoryId);
+    if (product.brand) params.set('marca', product.brand);
+    const recommended = await backendRequest(`/productos/recomendados?${params.toString()}`);
+    const [publicRatings, ownRatings] = await Promise.all([
+      backendRequest(`/calificaciones?producto_id=${product.id}&estado=aprobada`),
+      apiRequest(req, `/calificaciones/mias?producto_id=${product.id}`).catch(() => [])
+    ]);
+    const ownIds = new Set((ownRatings || []).map((rating) => rating.id));
+    const ratings = [
+      ...(ownRatings || []),
+      ...(publicRatings || []).filter((rating) => !ownIds.has(rating.id))
+    ];
+
+    return res.render('producto-detalle', {
+      usuario: getSessionName(req),
+      csrfToken: res.locals.csrfToken || '',
+      product,
+      recommended: recommended.map(mapProductForCatalog),
+      ratings
+    });
+  } catch (error) {
+    console.error('Error al abrir detalle de producto:', error);
+    return res.redirect('/menu');
+  }
+}
+
+export async function postCalificacion(req, res) {
+  if (!requireLogin(req, res)) return;
+  try {
+    await apiRequest(req, '/calificaciones', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        producto_id: req.body.producto_id,
+        puntuacion: req.body.puntuacion,
+        comentario: req.body.comentario
+      })
+    });
+  } catch (error) {
+    console.error('Error al crear calificacion:', error);
+  }
+  return res.redirect(`/producto/${req.body.producto_id}`);
+}
+
+export async function getCalificacionesAdmin(req, res) {
+  if (!requireModerator(req, res)) return;
+  try {
+    const ratings = await apiRequest(req, '/calificaciones/moderacion');
+    return renderAdmin('calificaciones-listar', req, res, {
+      ratings: Array.isArray(ratings) ? ratings : []
+    });
+  } catch (error) {
+    return renderAdmin('calificaciones-listar', req, res, {
+      ratings: [],
+      error: error.message || 'No se pudieron cargar las calificaciones'
+    });
+  }
+}
+
+export async function postModerarCalificacion(req, res) {
+  if (!requireModerator(req, res)) return;
+  try {
+    await apiRequest(req, `/calificaciones/${req.body.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ estado: req.body.estado })
+    });
+  } catch (error) {
+    console.error('Error al moderar calificacion:', error);
+  }
+  return res.redirect('/admin/calificaciones');
+}
+
 export async function getInventario(req, res) {
   if (!requireLogin(req, res)) {
     return;
+  }
+  if (getSessionRole(req) !== 'admin') {
+    return res.status(403).json({ error: 'Solo los administradores pueden consultar el inventario local' });
   }
 
   try {
@@ -773,6 +1211,80 @@ export async function postPedido(req, res) {
   } catch (error) {
     console.error('Error al crear pedido:', error);
     res.status(502).json({ error: 'No se pudo crear el pedido en el backend' });
+  }
+}
+
+export async function getCheckout(req, res) {
+  if (!req.session?.token) {
+    return res.redirect('/login');
+  }
+
+  return res.render('checkout', {
+    usuario: getSessionName(req),
+    csrfToken: res.locals.csrfToken || '',
+    error: null,
+    pedido: null,
+    form: {}
+  });
+}
+
+export async function postCheckout(req, res) {
+  if (!requireLogin(req, res)) {
+    return;
+  }
+
+  const form = {
+    postal_code: toText(req.body.postal_code, ''),
+    location: toText(req.body.location, ''),
+    province: toText(req.body.province, ''),
+    municipality: toText(req.body.municipality, ''),
+    address: toText(req.body.address, ''),
+    card_name: toText(req.body.card_name, ''),
+    card_number: toText(req.body.card_number, ''),
+    coupon_code: toText(req.body.coupon_code, ''),
+    card_expiry: toText(req.body.card_expiry, ''),
+    card_cvv: toText(req.body.card_cvv, '')
+  };
+
+  try {
+    const sessionId = ensureCatalogSession(req);
+    const direccion = [
+      form.address,
+      form.location,
+      form.municipality,
+      form.province,
+      form.postal_code
+    ].filter(Boolean).join(', ');
+
+    const pedido = await backendRequest('/pedidos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        session_id: sessionId,
+        cliente_nombre: getSessionName(req),
+        cliente_email: req.session?.usuario?.email || null,
+        direccion,
+        cupon_codigo: form.coupon_code || null,
+        estado: 'enviado'
+      })
+    });
+
+    return res.render('checkout', {
+      usuario: getSessionName(req),
+      csrfToken: res.locals.csrfToken || '',
+      error: null,
+      pedido,
+      form: {}
+    });
+  } catch (error) {
+    console.error('Error al finalizar checkout:', error);
+    return res.render('checkout', {
+      usuario: getSessionName(req),
+      csrfToken: res.locals.csrfToken || '',
+      error: error.message || 'No se pudo crear el pedido',
+      pedido: null,
+      form
+    });
   }
 }
 

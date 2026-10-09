@@ -11,7 +11,8 @@
     "test:selenium:ticket-03": "node tests/selenium/ticket-03-wrong-password.test.js",
     "test:selenium:ticket-04": "node tests/selenium/ticket-04-empty-fields.test.js",
     "test:selenium:ticket-05": "node tests/selenium/ticket-05-product-form.test.js",
-    "test:selenium:ticket-06": "node tests/selenium/ticket-06-product-create-valid.test.js"
+    "test:selenium:ticket-06": "node tests/selenium/ticket-06-product-create-valid.test.js",
+    "test:selenium:stress": "node tests/selenium/stress-suite.test.js"
   },
   "keywords": [],
   "author": "",
@@ -23,6 +24,7 @@
     "express": "^5.2.1",
     "express-session": "^1.19.0",
     "node-fetch": "^3.3.2",
-    "selenium-webdriver": "^4.47.0"
+    "selenium-webdriver": "^4.47.0",
+    "session-file-store": "^1.5.0"
   }
 }
